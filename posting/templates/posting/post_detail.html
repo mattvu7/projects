@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+<style>
+  .post-container {
+    max-width: 800px;
+    margin: 40px auto;
+  }
+
+  .post-card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .post-title {
+    margin-top: 0;
+    color: #232D4B;
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+
+  .back-link {
+    text-decoration: none;
+    color: #232D4B;
+    font-weight: bold;
+    font-size: 0.95rem;
+  }
+
+  .author-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 4px 0;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .author-text-main {
+    font-size: 0.95rem;
+    color: #555;
+  }
+
+  .author-name-link {
+    text-decoration: none;
+    color: #232D4B;
+    font-weight: 600;
+  }
+
+  .post-meta {
+    font-size: 0.9rem;
+    color: #555;
+    margin-top: 6px;
+  }
+
+  .post-meta strong {
+    color: #333;
+  }
+
+  .post-image {
+    width: 50%;
+    border-radius: 12px;
+    margin: 8px 0 0 0;
+  }
+
+  .section-title {
+    color: #232D4B;
+    margin-top: 10px;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .post-description {
+    line-height: 1.6;
+    color: #333;
+    font-size: 0.98rem;
+  }
+
+  /* Reusable buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .btn-primary {
+    background: #E57200;
+    color: #fff;
+  }
+
+  .btn-danger {
+    background: #b30000;
+    color: #fff;
+  }
+
+  .btn-muted {
+    background: #6c757d;
+    color: #fff;
+  }
+
+  .btn-flag {
+    background: #e74c3c;
+    color: #fff;
+  }
+
+  /* Footer row with actions */
+  .post-footer {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .post-footer-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .post-footer-right {
+    margin-left: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+</style>
+
+{% if messages %}
+  {% for message in messages %}
+    {% if "report-notice" in message.tags %}
+      <div style="
+          background:#fff3cd;
+          color:#664d03;
+          padding:10px 14px;
+          border-radius:6px;
+          margin:10px 0;
+          border:1px solid #ffeeba;
+      ">
+        {{ message }}
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<div class="container post-container">
+
+  <a href="{% url 'posting:post_list' %}" class="back-link">
+     ← Back to All Posts
+  </a>
+
+  <div class="post-card">
+
+    <h1 class="post-title" style="display:flex; align-items:center; gap:10px;">
+      {{ post.event }}
+
+      {% if post.visibility == post.Visibility.FRIENDS_ONLY %}
+          <span style="
+              padding:4px 10px;
+              background:#FFE8B2;
+              color:#8A4B00;
+              border-radius:12px;
+              font-size:13px;
+              display:inline-flex;
+              align-items:center;
+              gap:4px;
+          ">
+              🔒 Friends Only
+          </span>
+      {% endif %}
+  </h1>
+    <!-- Author Profile -->
+    <div class="author-row">
+      <a href="{% url 'profiles:view_profile' post.author.id %}">
+        {% if post.author.profile.profile_pic %}
+          <img src="{{ post.author.profile.avatar_url }}"
+               alt="Profile photo"
+               class="author-avatar">
+        {% else %}
+          <img src="{% static 'images/default-avatar.jpg' %}"
+               alt="Default avatar"
+               class="author-avatar">
+        {% endif %}
+      </a>
+      <div class="author-text-main">
+        <strong>Created by:</strong>
+        <a href="{% url 'profiles:view_profile' post.author.id %}" class="author-name-link">
+          {{ post.author.profile.display_name|default:post.author.username }}
+        </a>
+      </div>
+    </div>
+
+    <!-- Meta info -->
+    <div class="post-meta">
+      <strong>Date:</strong> {{ post.created_at|date:"M d, Y, g:i A" }}<br>
+      <strong>Cuisine:</strong> {{ post.cuisine }}<br>
+      {% if post.pickup_deadline %}
+        <strong>Pickup Available Until:</strong> 
+        <span style="{% if not post.is_pickup_available %}color:#d32f2f; font-weight:bold;{% else %}color:#4caf50;{% endif %}">
+          {{ post.pickup_deadline|date:"M d, Y, g:i A" }}
+          {% if post.is_pickup_available %}
+            ({{ post.get_time_until_deadline }} remaining)
+          {% else %}
+            (Expired)
+          {% endif %}
+        </span>
+      {% else %}
+        <strong>Pickup Available:</strong> <span style="color:#4caf50;">No specific deadline</span>
+      {% endif %}
+    </div>
+
+    {% if post.image %}
+      <img src="{{ post.image.url }}" alt="{{ post.event }}" class="post-image">
+    {% endif %}
+
+    <div>
+      <h3 class="section-title">Event Description</h3>
+      <p class="post-description">
+        {{ post.event_description|linebreaks }}
+      </p>
+    </div>
+
+    <!-- Thanks Section (no button here) -->
+    <div style="margin:10px 0; padding:15px; background:#f8f9fa; border-radius:8px; border:1px solid #dee2e6;">
+      <p style="margin:0; color:#555;">
+        <strong>👍 Thanks:</strong> <span id="thanks-count">{{ post.author.thanks_received.count }}</span>
+      </p>
+    </div>
+
+    <!-- RSVP Section (info only; button is in footer) -->
+    <div style="margin:0; padding:15px; background:#e8f5e9; border-radius:8px; border:1px solid #4caf50;">
+      {% if not post.is_pickup_available %}
+        <div style="background:#ffebee; border-left:4px solid #d32f2f; padding:12px; margin-bottom:15px; border-radius:4px;">
+          <p style="margin:0; color:#c62828; font-weight:600;">
+            ⚠️ Pickup deadline has passed. Food is no longer available.
+          </p>
+        </div>
+      {% endif %}
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <p style="margin:0; color:#555;">
+          <strong>📋 RSVPs:</strong> <span id="rsvp-count">{{ rsvp_count }}</span>
+        </p>
+        {% if user == post.author and rsvp_count > 0 %}
+          <a href="{% url 'posting:view_post_rsvps' post.id %}"
+             class="btn"
+             style="background:#4caf50; color:white; font-size:13px;">
+            View RSVPs
+          </a>
+        {% endif %}
+      </div>
+      
+      {% if user.is_authenticated and user != post.author %}
+        {% if user_rsvp %}
+          <div style="background:white; padding:12px; border-radius:6px; margin-top:10px;">
+            <p style="margin:0 0 8px 0; color:#333;">
+              <strong>✅ You RSVP'd:</strong> Arriving in {{ user_rsvp.estimated_arrival_minutes }} minutes
+            </p>
+            <p style="margin:0 0 8px 0; color:#666; font-size:0.9rem;">
+              Estimated arrival: {{ user_rsvp.get_estimated_arrival_time|date:"g:i A" }}
+              <span id="time-remaining">({{ user_rsvp.get_time_remaining }} remaining)</span>
+            </p>
+            <script>
+              // Update time remaining every minute
+              (function() {
+                const arrivalTime = new Date('{{ user_rsvp.get_estimated_arrival_time|date:"c" }}');
+                const timeRemainingEl = document.getElementById('time-remaining');
+                if (timeRemainingEl) {
+                  function updateTimeRemaining() {
+                    const now = new Date();
+                    const diff = arrivalTime - now;
+                    if (diff <= 0) {
+                      timeRemainingEl.textContent = '(Arrived)';
+                      return;
+                    }
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    if (hours > 0) {
+                      timeRemainingEl.textContent = `(${hours}h ${mins}m remaining)`;
+                    } else {
+                      timeRemainingEl.textContent = `(${minutes} minutes remaining)`;
+                    }
+                  }
+                  updateTimeRemaining();
+                  setInterval(updateTimeRemaining, 60000); // Update every minute
+                }
+              })();
+            </script>
+            <p style="margin:0 0 8px 0; color:#d32f2f; font-size:0.85rem; font-style:italic;">
+              ⚠️ Note: Food is not guaranteed if you arrive late.
+            </p>
+            <form method="POST" action="{% url 'posting:cancel_rsvp' user_rsvp.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger" style="font-size:13px;">
+                Cancel RSVP
+              </button>
+            </form>
+          </div>
+        {% else %}
+          {% if post.is_pickup_available %}
+            {% if post.pickup_deadline %}
+              <p style="margin:8px 0 0 0; color:#666; font-size:0.85rem; font-style:italic;">
+                ⚠️ Note: Food pickup available until {{ post.pickup_deadline|date:"g:i A" }}. 
+                Food is not guaranteed if you arrive late or after the deadline.
+              </p>
+            {% else %}
+              <p style="margin:8px 0 0 0; color:#666; font-size:0.85rem; font-style:italic;">
+                ⚠️ Note: Food is not guaranteed if you arrive late.
+              </p>
+            {% endif %}
+          {% else %}
+            <p style="margin:10px 0 0 0; color:#d32f2f; font-size:0.9rem; font-weight:600;">
+              ❌ RSVP unavailable - Pickup deadline has passed
+            </p>
+          {% endif %}
+        {% endif %}
+      {% elif not user.is_authenticated %}
+        <p style="margin:10px 0 0 0; color:#666; font-size:0.9rem;">
+          <a href="{% url 'account_login' %}" style="color:#4caf50; text-decoration:underline;">Log in</a> to RSVP for this food.
+        </p>
+      {% endif %}
+    </div>
+
+    {% if post.qr_code_image %}
+      <div style="margin-top:4px;">
+        <h3 style="color:#232D4B;">QR Code</h3>
+        <img src="{{ post.qr_code_image.url }}" alt="QR Code for {{ post.event }}"
+             style="max-width:200px; border-radius:8px;">
+      </div>
+    {% endif %}
+
+    <!-- Footer actions at bottom of card -->
+    <div class="post-footer">
+      <div class="post-footer-left">
+        <!-- optional: tags/badges later -->
+      </div>
+
+      <div class="post-footer-right">
+        {% if user == post.author %}
+          <a href="{% url 'posting:edit_post' post.id %}" class="btn btn-primary">
+            Edit
+          </a>
+          <a href="{% url 'posting:delete_post' post.id %}" class="btn btn-danger">
+            Delete
+          </a>
+        {% endif %}
+
+        {% if user.is_authenticated and user != post.author %}
+          {% if post.is_pickup_available and not user_rsvp %}
+            <a href="{% url 'posting:create_rsvp' post.id %}"
+               class="btn"
+               style="background:#4caf50; color:white; font-size:14px;">
+              📋 RSVP to Pick Up
+            </a>
+          {% endif %}
+
+          <button id="thank-button"
+                  onclick="thankOrganizer()"
+                  class="btn"
+                  style="background:#28a745; color:white;">
+            Thank Organizer
+          </button>
+          <span id="thank-message" style="display:none; color:#28a745; font-weight:600;"></span>
+
+          <button
+            onclick="openFlagModal({{ post.id }})"
+            class="btn btn-flag"
+            title="Flag this post for moderator review"
+            aria-label="Flag post">
+            🚩 Flag
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function openFlagModal(postId) {
+    const reason = prompt('Please provide a reason for flagging this post:');
+    if (reason && reason.trim()) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "moderation:flag_content" %}';
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrfmiddlewaretoken';
+        csrf.value = '{{ csrf_token }}';
+        form.appendChild(csrf);
+        
+        const contentType = document.createElement('input');
+        contentType.type = 'hidden';
+        contentType.name = 'content_type_id';
+        contentType.value = '{{ post_content_type_id|default:"" }}';
+        form.appendChild(contentType);
+        
+        const objectId = document.createElement('input');
+        objectId.type = 'hidden';
+        objectId.name = 'object_id';
+        objectId.value = postId;
+        form.appendChild(objectId);
+        
+        const reasonInput = document.createElement('input');
+        reasonInput.type = 'hidden';
+        reasonInput.name = 'reason';
+        reasonInput.value = reason.trim();
+        form.appendChild(reasonInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function thankOrganizer() {
+    const button = document.getElementById('thank-button');
+    const thanksCount = document.getElementById('thanks-count');
+    const message = document.getElementById('thank-message');
+    
+    // Disable button to prevent double-clicking
+    button.disabled = true;
+    button.textContent = 'Sending...';
+    
+    const formData = new FormData();
+    formData.append('organizer_id', '{{ post.author.id }}');
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch('{% url "posting:thank_organizer" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            thanksCount.textContent = data.thanks_count;
+            button.textContent = 'Thanked!';
+            button.classList.add('btn-muted');
+            message.textContent = '✓ Thank you!';
+            message.style.display = 'inline';
+        } else if (data.status === 'already_thanked') {
+            button.textContent = 'Already Thanked';
+            button.classList.add('btn-muted');
+            message.textContent = 'You already thanked this organizer';
+            message.style.display = 'inline';
+            message.style.color = '#dc3545';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        button.disabled = false;
+        button.textContent = 'Thank Organizer';
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}

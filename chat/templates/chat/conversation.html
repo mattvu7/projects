@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+{% load static %}
+{% load tz %}
+
+{% block title %}
+  {% if conversation.is_group %}
+    {{ conversation.name }} - UVA Leftovers
+  {% else %}
+    Chat with {{ other_user.username }} - UVA Leftovers
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+    .messages-container {
+        max-width: 1000px;
+        margin: 20px auto;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 20px;
+        height: calc(100vh - 200px);
+    }
+
+    .conversations-sidebar {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #10172A 0%, #E57200 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sidebar-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+
+    .search-box {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #E57200;
+    }
+
+    .conversations-list {
+        flex: 1;
+        overflow-y: auto;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .conversation-item {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .conversation-item:hover {
+        background: #f8f9fa;
+    }
+
+    .conversation-item.active {
+        background: #fff5ed;
+        border-left: 4px solid #E57200;
+    }
+
+    .conversation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .conversation-name {
+        font-weight: 600;
+        color: #10172A;
+    }
+
+    .conversation-time {
+        font-size: 12px;
+        color: #999;
+    }
+
+    .conversation-preview {
+        font-size: 14px;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+
+
+
+    .chat-window {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .chat-header {
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #10172A 0%, #E57200 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .chat-header img {
+        margin-right: 8px;
+    }
+
+    .chat-header h2 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .user-status {
+        font-size: 12px;
+        opacity: 0.9;
+        margin-top: 2px;
+    }
+
+    .messages-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px 20px;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .message-wrapper {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .message-wrapper.own {
+        justify-content: flex-end;
+    }
+
+    .message {
+        max-width: 65%;
+        padding: 10px 14px;
+        border-radius: 18px;
+        background: white;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        font-size: 14px;
+    }
+
+    .message-wrapper.own .message {
+        background: #E57200;
+        color: white;
+        border-bottom-right-radius: 4px;
+        border-bottom-left-radius: 18px;
+    }
+
+    .message-wrapper:not(.own) .message {
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 18px;
+    }
+
+    .message-content {
+        margin-bottom: 4px;
+        word-wrap: break-word;
+    }
+
+    .message-time {
+        font-size: 11px;
+        color: #999;
+        text-align: right;
+    }
+
+    .message-wrapper.own .message-time {
+        color: rgba(255,255,255,0.85);
+    }
+
+    .empty-messages {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+        font-size: 14px;
+    }
+
+    .chat-input-container {
+        padding: 14px 16px;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .chat-form {
+        display: flex;
+        gap: 10px;
+    }
+
+    .chat-form input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 24px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.2s ease;
+    }
+
+    .chat-form input:focus {
+        outline: none;
+        border-color: #E57200;
+    }
+
+    .chat-form button {
+        padding: 10px 20px;
+        background: #E57200;
+        color: white;
+        border: none;
+        border-radius: 24px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: background 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .chat-form button:hover {
+        background: #c76200;
+    }
+    .new-message-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s ease;
+    }
+
+    .new-message-btn:hover {
+    background: rgba(255,255,255,0.3);
+    }
+    .sent_user {
+        font-size: 12px;
+        font-weight: 600;
+        color: #4f6b95;       /* muted blue-gray */
+        margin-bottom: 4px;   /* space between name and message */
+    }
+
+
+  .conversation-item.unread .conversation-name,
+  .conversation-item.unread .conversation-preview {
+    font-weight: 700;      /* bold */
+    color: #10172A;        /* strong color */
+  }
+
+  .conversation-item.unread {
+    background: #ffe8d6;   /* slightly stronger than active */
+    border-left: 4px solid #1040ed;  /* strong visual marker */
+  }
+
+    @media (max-width: 768px) {
+        .messages-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+        .conversations-sidebar {
+            display: none;
+        }
+        .chat-window {
+            height: calc(100vh - 140px);
+        }
+        .message {
+            max-width: 80%;
+        }
+    }
+</style>
+
+<div class="messages-container">
+  <!-- Left Sidebar: Conversations List -->
+  <div class="conversations-sidebar">
+    <div class="sidebar-header">
+      <h2>💬 Messages</h2>
+      <a href="{% url 'chat:start_conversation' %}" class="new-message-btn">+ New</a>
+    </div>
+
+    <div class="search-box">
+      <input type="text" placeholder="Search messages..." id="searchInput">
+    </div>
+
+    <ul class="conversations-list">
+      {% for conv in all_conversations %}
+        <a href="{% url 'chat:conversation' conv.id %}"
+          class="conversation-item
+          {% if conv.id == conversation.id %} active{% endif %}
+          {% if conv.unread_count > 0 %} unread{% endif %}">
+
+          <div class="conversation-header">
+            <span class="conversation-name">
+              {% if conv.is_group %}
+                {{ conv.name }}
+              {% else %}
+                {# show the "other" participant #}
+                {% for p in conv.participants.all %}
+                  {% if p != request.user %}
+                    {{ p.profile.display_name|default:p.username }}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            </span>
+            {% if conv.messages.last %}
+              <span class="conversation-time">
+                {{ conv.messages.last.timestamp|timesince }} ago
+              </span>
+            {% endif %}
+          </div>
+          <div class="conversation-preview">
+            {% if conv.messages.last %}
+              {{ conv.messages.last.content|truncatewords:8 }}
+            {% else %}
+              No messages yet
+            {% endif %}
+          </div>
+        </a>
+      {% empty %}
+        <div style="padding: 20px; text-align: center; color: #999;">
+          <p>No conversations yet</p>
+        </div>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Right Side: Chat Window -->
+  <div class="chat-window">
+        <div class="chat-header">
+      {% if conversation.is_group %}
+        <div>
+          <h2>{{ conversation.name }}</h2>
+          <div class="user-status">
+            {% for user in conversation.participants.all %}
+              {{ user.profile.display_name|default:"Deleted User"}}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+  {# 1:1 chat header: avatar + name #}
+  {% if other_user and other_user.profile %}
+    <a href="{% url 'profiles:view_profile' other_user.id %}">
+      {% if other_user.profile.profile_pic %}
+        <img src="{{ other_user.profile.avatar_url }}"
+             alt="Profile photo"
+             style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+      {% else %}
+        <img src="{% static 'images/default-avatar.jpg' %}"
+             alt="Default avatar"
+             style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+      {% endif %}
+    </a>
+    <div>
+      <h2>{{ other_user.profile.display_name|default:other_user.username }}</h2>
+      <div class="user-status">
+        Direct message
+      </div>
+    </div>
+  {% else %}
+    {# other_user is missing / deleted #}
+    <div>
+      <img src="{% static 'images/default-avatar.jpg' %}"
+           alt="Deleted user"
+           style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+    </div>
+    <div>
+      <h2>Deleted user</h2>
+      <div class="user-status">
+        Direct message
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+    </div>
+
+
+    <div class="messages-area" id="messagesArea">
+      {% for message in messages %}
+        <div class="message-wrapper {% if message.sender == request.user %}own{% endif %}">
+          <div class="message">
+              <div class="sent_user"> {{ message.sender.profile.display_name|default:"Deleted User" }} </div>
+            <div class="message-content">{{ message.content }}</div>
+            <div class="message-time">{{ message.timestamp|date:"M d, g:i A" }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty-messages">
+          {% if conversation.is_group %}
+            <p>No messages yet. Say hi to everyone! 👋</p>
+          {% else %}
+            <p>No messages yet. Say hi to {{ other_user.profile.display_name|default:other_user.username }}! 👋</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="chat-input-container">
+      <form method="POST" class="chat-form" id="messageForm">
+        {% csrf_token %}
+        <input
+          type="text"
+          name="message"
+          placeholder="Type a message..."
+          required
+          autocomplete="off"
+          id="messageInput"
+        >
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-scroll to bottom of messages
+  const messagesArea = document.getElementById('messagesArea');
+  if (messagesArea) {
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+  }
+
+  // Focus on input
+  const messageInput = document.getElementById('messageInput');
+  if (messageInput) {
+    messageInput.focus();
+  }
+
+  // Sidebar search
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const conversations = document.querySelectorAll('.conversation-item');
+
+      conversations.forEach(conv => {
+        const name = conv.querySelector('.conversation-name').textContent.toLowerCase();
+        if (name.includes(searchTerm)) {
+          conv.style.display = 'block';
+        } else {
+          conv.style.display = 'none';
+        }
+      });
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "moderator_base.html" %}
+{% load static %}
+
+{% block title %}Moderator Dashboard{% endblock %}
+
+{% block content %}
+<style>
+        .moderator-dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .badge {
+            width: 80px;
+            height: 80px;
+            background: #f39c12;
+            border-radius: 8px;
+            margin: 16px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+        .dashboard-section {
+            background: #ecf0f1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .dashboard-section h2 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        button, a button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        button:hover, a button:hover {
+            background: #2980b9;
+        }
+        .moderator-action {
+            background: #e74c3c;
+        }
+        .moderator-action:hover {
+            background: #c0392b;
+        }
+        .info-text {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Moderator Dashboard 🔧</h1>
+    
+    <!-- Visual role cue (orange square for moderator) -->
+    <div class="badge">MOD</div>
+    
+    <div class="dashboard-section" style="background: #2ecc71; border: 3px solid #27ae60;">
+        <h2 style="color: white;">🚀 Quick Access - Django Admin Panel</h2>
+        <p style="color: white; font-weight: bold;">You have full admin access! Click below to open the admin panel.</p>
+        <div class="button-group">
+            <a href="/admin/" target="_blank"><button style="background: white; color: #2ecc71; font-size: 18px; padding: 15px 30px; font-weight: bold;">🔑 Open Admin Panel</button></a>
+        </div>
+        <p class="info-text" style="color: white; margin-top: 10px;">Moderators have the same access as admin users. You can manage all aspects of the platform.</p>
+    </div>
+    
+    <div class="dashboard-section">
+        <h2>👥 User Management</h2>
+        <p class="info-text">Manage user accounts, roles, and permissions via admin panel</p>
+        <div class="button-group">
+            <a href="/admin/auth/user/" target="_blank"><button>📋 All Users</button></a>
+            <a href="/admin/profiles/profile/" target="_blank"><button>👤 User Profiles</button></a>
+            <a href="/admin/auth/group/" target="_blank"><button>🔐 User Groups</button></a>
+            <a href="/admin/auth/permission/" target="_blank"><button>⚙️ Permissions</button></a>
+        </div>
+        <p class="info-text" style="margin-top: 10px;">Tip: Use bulk actions in Profiles to quickly appoint or remove moderators.</p>
+    </div>
+    
+    <div class="dashboard-section">
+        <h2>📝 Account & Session Management</h2>
+        <p class="info-text">Manage account settings and active sessions</p>
+        <div class="button-group">
+            <a href="/admin/account/emailaddress/" target="_blank"><button>✉️ Email Addresses</button></a>
+            <a href="/admin/account/emailconfirmation/" target="_blank"><button>✅ Email Confirmations</button></a>
+            <a href="/admin/sessions/session/" target="_blank"><button>🔒 Active Sessions</button></a>
+        </div>
+    </div>
+    
+    <div class="dashboard-section">
+        <h2>🔗 Social Accounts</h2>
+        <p class="info-text">Manage OAuth/social login accounts</p>
+        <div class="button-group">
+            <a href="/admin/socialaccount/socialaccount/" target="_blank"><button>🌐 Social Accounts</button></a>
+            <a href="/admin/socialaccount/socialapp/" target="_blank"><button>⚙️ Social Apps (OAuth)</button></a>
+            <a href="/admin/socialaccount/socialtoken/" target="_blank"><button>🎫 Social Tokens</button></a>
+        </div>
+    </div>
+    
+    <div class="dashboard-section">
+        <h2>📊 Admin Logs & Activity</h2>
+        <p class="info-text">View all admin actions and changes</p>
+        <div class="button-group">
+            <a href="/admin/admin/logentry/" target="_blank"><button>📜 Admin Action Log</button></a>
+            <a href="/admin/moderation/moderatoractivitylog/" target="_blank"><button>📋 Organization Activity Logs</button></a>
+            <a href="/admin/moderation/moderatornotification/" target="_blank"><button>🔔 Moderator Notifications</button></a>
+        </div>
+        <p class="info-text" style="margin-top: 10px;">View activity logs for specific organizations: Use the command <code>python manage.py list_organizations</code> to get organization IDs, then visit <code>/moderation/activity-log/&lt;user_id&gt;/</code></p>
+    </div>
+    
+    <div class="dashboard-section" style="background: #fff3cd; border-left: 5px solid #ffc107;">
+        <h2>🚩 Content Moderation</h2>
+        <p class="info-text">Review and manage flagged content (messages, posts, etc.)</p>
+        <div class="button-group">
+            <a href="{% url 'moderation:review_flagged' %}"><button style="background: #f39c12; font-size: 18px; padding: 15px 30px; font-weight: bold;">🚩 Review Flagged Content</button></a>
+        </div>
+        <p class="info-text" style="margin-top: 10px;">Users can flag inappropriate content. Review and take action to keep the platform safe.</p>
+    </div>
+    
+    <div class="dashboard-section" style="background: #e8f4f8; border-left: 5px solid #3498db;">
+        <h2>📋 Organization Activity Logs</h2>
+        <p class="info-text">View detailed activity logs for specific organizations</p>
+        <div class="button-group">
+            <a href="/admin/moderation/moderatoractivitylog/" target="_blank"><button style="background: #3498db; font-size: 18px; padding: 15px 30px; font-weight: bold;">📋 View All Activity Logs (Admin)</button></a>
+        </div>
+        <p class="info-text" style="margin-top: 10px;">
+            <strong>Quick Access:</strong> Run <code>python manage.py list_organizations</code> to get organization IDs, then visit 
+            <code>/moderation/activity-log/&lt;user_id&gt;/</code> to view logs for a specific organization.
+        </p>
+    </div>
+    
+    <div class="dashboard-section" style="background: #ffe6e6; border-left: 5px solid #e74c3c;">
+        <h2>🚫 User Suspension Management</h2>
+        <p class="info-text">Suspend or reinstate users for repeated violations</p>
+        <div class="button-group">
+            <a href="{% url 'moderation:manage_suspensions' %}"><button style="background: #e74c3c; font-size: 18px; padding: 15px 30px; font-weight: bold;">🚫 Manage Suspensions</button></a>
+        </div>
+        <p class="info-text" style="margin-top: 10px;">Suspend users who repeatedly violate community standards. Track suspension history and reinstate users when appropriate.</p>
+    </div>
+    
+    <div class="dashboard-section">
+        <h2>🌍 Site Configuration</h2>
+        <p class="info-text">Configure site settings and domains</p>
+        <div class="button-group">
+            <a href="/admin/sites/site/" target="_blank"><button>🌐 Sites</button></a>
+        </div>
+    </div>
+    
+    <div class="dashboard-section" style="background: #e3f2fd; border-left: 5px solid #2196f3;">
+        <h2>👀 View User-Facing Pages</h2>
+        <p class="info-text">Access all user-facing features - moderators have full site access</p>
+        <div class="button-group">
+            <a href="/student/"><button>👨‍🎓 Student View</button></a>
+            <a href="/provider/"><button>🏢 Provider/Org View</button></a>
+            <a href="/"><button>🏠 Landing Page</button></a>
+            <a href="/friends/"><button>👥 Friends List</button></a>
+            <a href="/chat/"><button>💬 Chat</button></a>
+            <a href="/profile/"><button>👤 My Profile</button></a>
+        </div>
+        <p class="info-text" style="margin-top: 10px;">Moderators can access all user-facing pages to see the platform from different perspectives and test functionality.</p>
+    </div>
+    
+    <div class="dashboard-section" style="background: #e8f5e9; border-left: 5px solid #4caf50;">
+        <h3 style="color: #2e7d32; margin-top: 0;">ℹ️ Moderator Information</h3>
+        <ul style="color: #555;">
+            <li><strong>Admin Access:</strong> You have full admin panel access (same as superuser)</li>
+            <li><strong>Site Access:</strong> You can access all user-facing pages (Student, Provider, Friends, Chat, etc.)</li>
+            <li><strong>All Permissions:</strong> Moderators have full access to everything on the platform</li>
+            <li><strong>Cannot Delete:</strong> Moderators cannot delete their own accounts (security protection)</li>
+            <li><strong>Multiple Moderators:</strong> There can be multiple moderators - you are not alone!</li>
+            <li><strong>Assignment:</strong> Only existing admins/superusers can appoint new moderators</li>
+            <li><strong>Auto Staff:</strong> Your is_staff status is automatically managed based on moderator role</li>
+        </ul>
+    </div>
+    
+    <p style="text-align: center; margin-top: 30px;">
+        <a href="/">🏠 Back to Home</a> | 
+        <a href="/admin/" target="_blank">🔑 Admin Panel</a> |
+        <a href="/moderator/">🔄 Refresh Dashboard</a>
+    </p>
+{% endblock %}
+

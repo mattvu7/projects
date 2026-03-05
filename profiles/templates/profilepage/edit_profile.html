@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile | UVA Leftovers{% endblock %}
+
+{% block content %}
+<style>
+  .profile-edit-wrapper {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+
+  .profile-edit-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 40px;
+    text-align: left;
+  }
+
+  .profile-edit-title {
+    margin-bottom: 32px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #232D4B;
+    text-align: center;
+    border-bottom: 3px solid #E57200;
+    padding-bottom: 16px;
+  }
+
+  .form-row {
+    margin-bottom: 24px;
+  }
+
+  .form-label {
+    font-weight: 600;
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 8px;
+    color: #232D4B;
+  }
+
+  .form-row input[type="text"],
+  .form-row input[type="email"],
+  .form-row textarea,
+  .form-row select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .form-row input[type="text"]:focus,
+  .form-row input[type="email"]:focus,
+  .form-row textarea:focus,
+  .form-row select:focus {
+    outline: none;
+    border-color: #E57200;
+    box-shadow: 0 0 0 3px rgba(229, 114, 0, 0.1);
+  }
+
+  .form-row textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .hint-text {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  .error-text {
+    color: #b91c1c;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  .avatar-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 32px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+  }
+
+  .avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #E57200;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .avatar-upload-section {
+    flex: 1;
+  }
+
+  .avatar-upload-section input[type="file"] {
+    padding: 8px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid #f3f4f6;
+  }
+
+  .primary-button {
+    padding: 14px 28px;
+    background: #E57200;
+    color: white;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(229, 114, 0, 0.3);
+  }
+
+  .primary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(229, 114, 0, 0.4);
+    background: #cf6500;
+  }
+
+  .link-button {
+    padding: 14px 28px;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: 2px solid #e5e7eb;
+    display: inline-block;
+    transition: all 0.2s ease;
+  }
+
+  .link-button:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #232D4B;
+  }
+
+  .danger-zone {
+    margin-top: 40px;
+    padding: 24px;
+    border-radius: 12px;
+    border: 2px solid #fecaca;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  }
+
+  .danger-title {
+    font-weight: 700;
+    color: #b91c1c;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .danger-title::before {
+    content: "⚠️";
+    font-size: 1.2rem;
+  }
+
+  .danger-text {
+    font-size: 0.9rem;
+    color: #7f1d1d;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .danger-button {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: #b91c1c;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(185,28,28,0.3);
+  }
+
+  .danger-button:hover {
+    background: #991b1b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(185,28,28,0.4);
+  }
+
+  /* Radio buttons styling */
+  .form-row ul:not(.checkbox-list) {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .form-row ul:not(.checkbox-list) li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-row ul:not(.checkbox-list) li label {
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .form-row ul:not(.checkbox-list) li input[type="radio"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  /* Checkbox styling for preferences and allergens */
+  .form-row ul[id*="preferences"],
+  .form-row ul[id*="allergens"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+    list-style: none;
+    padding: 0;
+  }
+
+  .form-row ul[id*="preferences"] li,
+  .form-row ul[id*="allergens"] li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+  }
+
+  .form-row ul[id*="preferences"] li:hover,
+  .form-row ul[id*="allergens"] li:hover {
+    background: #f3f4f6;
+    border-color: #E57200;
+  }
+
+  .form-row ul[id*="preferences"] li label,
+  .form-row ul[id*="allergens"] li label {
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  .form-row ul[id*="preferences"] li input[type="checkbox"],
+  .form-row ul[id*="allergens"] li input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 24px;
+    color: #E57200;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: #cf6500;
+    text-decoration: underline;
+  }
+</style>
+
+<div class="profile-edit-wrapper">
+  <h2 class="profile-edit-title">Edit Profile</h2>
+
+  <form method="post" enctype="multipart/form-data" class="profile-edit-card">
+
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="error-text" style="margin-bottom:10px;">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <!-- Current / preview avatar -->
+    <div class="avatar-wrapper">
+      {% if user.profile.profile_pic %}
+        <img id="avatarPreview" src="{{ user.profile.avatar_url }}" alt="Profile photo" class="avatar-preview">
+      {% else %}
+        <img id="avatarPreview" src="{% static 'images/default-avatar.png' %}" alt="Default avatar" class="avatar-preview">
+      {% endif %}
+
+      <div class="avatar-upload-section">
+        <button type="button" class="primary-button" id="uploadTrigger"> Upload a new photo</button>
+        {{ form.profile_pic }}
+        <div id="fileNameDisplay" class="hint-text" style="margin-top: 8px;"></div>
+        {% if form.profile_pic.errors %}
+          <div class="error-text">{{ form.profile_pic.errors }}</div>
+        {% endif %}
+        <div class="hint-text">JPEG/PNG recommended. Max file size: 5MB</div>
+      </div>
+    </div>
+
+    <!-- Display name -->
+    <div class="form-row">
+      <label for="{{ form.display_name.id_for_label }}" class="form-label">Display name</label><br>
+      {{ form.display_name }}
+      {% if form.display_name.errors %}
+        <div class="error-text">{{ form.display_name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Role -->
+    <div class="form-row">
+      <label for "{{ form.role.id_for_label }}" class="form-label">Role</label><br>
+      {{ form.role }}  {# Select or radios (your form decides) #}
+      {% if form.role.errors %}
+        <div class="error-text">{{ form.role.errors }}</div>
+      {% endif %}
+    </div>
+
+    {% with role=user.profile.role %}
+      {% if role == 'student' %}
+
+        <div class="form-row">
+          <label for="{{ form.preferences.id_for_label }}" class="form-label">🍽️ Favorite Cuisines (Preferences)</label>
+          <div style="margin-top: 8px;">
+            {{ form.preferences }}
+          </div>
+          {% if form.preferences.errors %}
+            <div class="error-text">{{ form.preferences.errors }}</div>
+          {% endif %}
+          <div class="hint-text">Select your favorite types of cuisine</div>
+        </div>
+
+        <div class="form-row">
+          <label for="{{ form.allergens.id_for_label }}" class="form-label">⚠️ Allergens</label>
+          <div style="margin-top: 8px;">
+            {{ form.allergens }}
+          </div>
+          {% if form.allergens.errors %}
+            <div class="error-text">{{ form.allergens.errors }}</div>
+          {% endif %}
+          <div class="hint-text">Select any allergens you need to avoid</div>
+        </div>
+
+        <!-- Major -->
+        <div class="form-row">
+          <label for="{{ form.major.id_for_label }}" class="form-label">Major</label><br>
+          {{ form.major }}
+          {% if form.major.errors %}
+            <div class="error-text">{{ form.major.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Bio -->
+        <div class="form-row">
+          <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label><br>
+          {{ form.bio }}
+          {% if form.bio.errors %}
+            <div class="error-text">{{ form.bio.errors }}</div>
+          {% endif %}
+          <div class="hint-text">
+            Share a bit about yourself (major, interests, pronouns, etc.).
+          </div>
+        </div>
+
+      {% elif role == 'org' %}
+
+        <div class="form-row">
+          <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label><br>
+          {{ form.bio }}
+          {% if form.bio.errors %}
+            <div class="error-text">{{ form.bio.errors }}</div>
+          {% endif %}
+          <div class="hint-text">
+            Share a bit about your organization / club.
+          </div>
+        </div>
+
+      {% endif %}
+    {% endwith %}
+
+    <!-- Save / Cancel -->
+    <div class="button-group">
+      <button type="submit" class="primary-button">
+        💾 Save Changes
+      </button>
+      <a href="{% url 'my_profile' %}" class="link-button">Cancel</a>
+    </div>
+
+    <!-- Danger zone / delete account -->
+    {% if profile.role != "moderator" %}
+    <div class="danger-zone">
+      <div class="danger-title">
+        Danger zone
+      </div>
+      <p class="danger-text">
+        Deleting your account is permanent and cannot be undone.
+      </p>
+      <a href="{% url 'profiles:delete_account' user.id %}"
+         onclick="return confirm('Are you sure you want to delete your account? This cannot be undone.');"
+         class="danger-button">
+        Delete my account
+      </a>
+    </div>
+    {% else %}
+    <div class="danger-zone" style="background: #fff3cd; border-color: #ffc107;">
+      <div class="danger-title" style="color: #856404;">
+        Account Deletion Restricted
+      </div>
+      <p class="danger-text" style="color: #856404;">
+        Moderators cannot delete accounts. Please contact an administrator if you need to delete your account.
+      </p>
+    </div>
+    {% endif %}
+
+  </form>
+
+  <div style="text-align: center;">
+    <a href="{% url 'my_profile' %}" class="back-link">← Back to Profile</a>
+  </div>
+</div>
+
+<script>
+  const realInput = document.getElementById('profilePicInput');
+  const triggerBtn = document.getElementById('uploadTrigger');
+  const preview = document.getElementById('avatarPreview');
+  const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+  triggerBtn.addEventListener('click', () => realInput.click());
+
+  realInput.addEventListener('change', e => {
+    const [file] = e.target.files || [];
+    if (file) {
+      preview.src = URL.createObjectURL(file);
+      fileNameDisplay.textContent = `Selected: ${file.name}`;
+    }
+  });
+</script>
+
+{% endblock %}

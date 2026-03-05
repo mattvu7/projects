@@ -1,0 +1,268 @@
+{% load static %}
+{% with p=request.path %}
+<nav style="width:100%; background:#232D4B; color:#fff; padding:10px 16px; box-sizing:border-box; position:relative; z-index:1000; overflow-x:hidden;">
+
+  <style>
+    .nav-inner{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      position:relative;
+      flex-wrap:nowrap;
+    }
+
+    .nav-left{ display:flex; align-items:center; gap:10px; }
+
+    .nav-center{
+      flex:1;
+      display:flex;
+      justify-content:center;
+      pointer-events:auto;
+    }
+
+    .nav-right{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-left:auto;
+    }
+
+    .nav-list{
+      list-style:none;
+      display:flex;
+      gap:18px;
+      margin:0;
+      padding:0;
+      align-items:center;
+      flex-wrap:nowrap;
+      white-space:nowrap;
+    }
+
+    .brand, .nav-link{
+      display:inline-flex;
+      align-items:center;
+      text-decoration:none;
+      padding:6px 10px;
+      border-radius:6px;
+      color:#fff;
+      position:relative;
+      transition:transform .2s, opacity .2s, color .2s;
+      white-space:nowrap;
+    }
+
+    .nav-link:hover, .brand:hover{
+      transform:translateY(-3px);
+      opacity:.9;
+    }
+
+    .nav-link::after, .brand::after{
+      content:"";
+      position:absolute;
+      left:0;
+      bottom:-2px;
+      height:3px;
+      width:0;
+      background:#E57200;
+      transition:width .25s;
+    }
+    .nav-link:hover::after, .brand:hover::after{
+      width:100%;
+    }
+
+    .active-link{
+      color:#E57200 !important;
+      font-weight:bold;
+    }
+    .active-link::after{ width:100%; }
+
+    .badge{
+      background:#E57200;
+      color:#fff;
+      border-radius:10px;
+      padding:2px 6px;
+      font-size:12px;
+      margin-left:6px;
+    }
+
+    /* ---------- Auth button style (Log In / Log Out) ---------- */
+    .btn-auth{
+      background:#E57200;
+      border-radius:8px;
+      padding:6px 16px;
+      font-weight:600;
+      box-shadow:0 2px 6px rgba(0,0,0,0.25);
+    }
+    .btn-auth::after{
+      /* no orange underline for pill buttons */
+      height:0;
+      width:0;
+    }
+    .btn-auth:hover{
+      background:#c96000;
+      transform:translateY(-2px);
+      opacity:1;
+    }
+
+    /* ---------- Avatar ring styles ---------- */
+    .nav-avatar-link::after{ height:0; width:0; }
+
+    .avatar-wrapper{
+      position:relative;
+      width:40px;
+      height:40px;
+    }
+
+    .avatar-ring{
+      position:absolute;
+      top:-4px;
+      left:-4px;
+      width:48px;
+      height:48px;
+      pointer-events:none;
+    }
+
+    .avatar-ring svg circle{
+      fill:none;
+      stroke:#E57200;
+      stroke-width:3;
+      stroke-linecap:round;
+      stroke-dasharray:150;
+      stroke-dashoffset:150;
+      opacity:0;
+      transition:stroke-dashoffset .5s ease, opacity .2s ease;
+    }
+
+    .avatar-wrapper:hover .avatar-ring svg circle{
+      opacity:1;
+      animation:ring-spin 1.6s linear infinite;
+    }
+
+    .avatar-wrapper.avatar-active .avatar-ring svg circle{
+      opacity:1;
+      stroke-dashoffset:0;
+      animation:none;
+    }
+
+    @keyframes ring-spin{
+      0%{ stroke-dashoffset:150; }
+      100%{ stroke-dashoffset:0; }
+    }
+  </style>
+
+  <div class="nav-inner">
+
+    <!-- LEFT: Brand -->
+    <div class="nav-left">
+      <a href="/" class="brand {% if p == '/' %}active-link{% endif %}">
+        <img src="{% static 'img/image.png' %}" alt="UVA Leftovers Logo"
+             style="height:28px;width:28px;object-fit:contain;">
+        <span style="font-weight:700; letter-spacing:.3px;">UVA Leftovers</span>
+      </a>
+    </div>
+
+    <!-- CENTER NAV (only when logged in) -->
+    {% if user.is_authenticated %}
+      <div class="nav-center">
+        <ul class="nav-list">
+
+          {% url 'posting:post_list' as posts_url %}
+          {% with role=user.profile.role %}
+
+            {% if role == 'student' %}
+              <li>
+                <a href="{{ posts_url }}"
+                   class="nav-link {% if p == posts_url or '/student' in p %}active-link{% endif %}">
+                  Food Listings
+                </a>
+                {% if unread_posts_count %}
+                  <span class="badge">{{ unread_posts_count }}</span>
+                {% endif %}
+              </li>
+
+            {% elif role == 'org' %}
+              <li>
+                <a href="{{ posts_url }}"
+                   class="nav-link {% if p == posts_url or '/provider' in p %}active-link{% endif %}">
+                  Post Listings
+                </a>
+              </li>
+            {% endif %}
+
+          {% endwith %}
+
+          {% url 'posting:event_history' as history_url %}
+          <li>
+            <a href="{{ history_url }}"
+               class="nav-link {% if '/posts/history' in p %}active-link{% endif %}">
+               Event History
+            </a>
+          </li>
+
+          {% url 'chat:index' as chat_url %}
+          <li>
+            <a href="{{ chat_url }}"
+               class="nav-link {% if p|slice:':6' == '/chat/' %}active-link{% endif %}">
+               Chat
+            </a>
+            {% if unread_count %}
+              <span class="badge">{{ unread_count }}</span>
+            {% endif %}
+          </li>
+
+          {% url 'friends:friends_list' as friends_url %}
+          <li>
+            <a href="{{ friends_url }}"
+               class="nav-link {% if p|slice:':9' == '/friends/' %}active-link{% endif %}">
+               Friends
+            </a>
+            {% if pending_friend_requests_count %}
+              <span class="badge">{{ pending_friend_requests_count }}</span>
+            {% endif %}
+          </li>
+
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- RIGHT SIDE -->
+    <div class="nav-right">
+
+      {% if user.is_authenticated %}
+
+        {% if user.is_staff %}
+          <a href="{% url 'posting:export_data' %}" class="nav-link">Export Data</a>
+        {% endif %}
+
+        <!-- Avatar -->
+        <a href="{% url 'profile_redirect' %}"
+           class="nav-link nav-avatar-link"
+           style="padding:0; display:flex; align-items:center;">
+          <div class="avatar-wrapper {% if '/profile' in p %}avatar-active{% endif %}">
+            <img src="{{ user.profile.avatar_url }}"
+                 alt="Profile photo"
+                 style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+            <div class="avatar-ring">
+              <svg viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="22"></circle>
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        <!-- ORANGE LOG OUT BUTTON -->
+        <a href="{% url 'account_logout' %}" class="nav-link btn-auth">
+          Log Out
+        </a>
+
+      {% else %}
+        <!-- ORANGE LOG IN BUTTON WHEN LOGGED OUT -->
+        <a href="{% url 'loginpage:login' %}" class="nav-link btn-auth">
+          Log In
+        </a>
+      {% endif %}
+
+    </div>
+
+  </div>
+</nav>
+{% endwith %}
